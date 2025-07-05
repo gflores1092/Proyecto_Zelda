@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Legend of Zelda RPG - Optimized</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="title">THE LEGEND OF ZELDA</div>
+        </div>
+        
+        <div class="game-screen">
+            <canvas id="gameCanvas" width="512" height="448"></canvas>
+            
+            <div class="ui-panel">
+                <div class="status-bar">
+                    <div class="health-container">
+                        <span class="label">LIFE</span>
+                        <div class="hearts">
+                            <div class="heart full" id="heart1"></div>
+                            <div class="heart full" id="heart2"></div>
+                            <div class="heart full" id="heart3"></div>
+                            <div class="heart full" id="heart4"></div>
+                            <div class="heart full" id="heart5"></div>
+                            <div class="heart full" id="heart6"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="rupees">
+                        <span class="label">RUPEES</span>
+                        <span class="rupee-count" id="rupeeCount">0</span>
+                    </div>
+                    
+                    <div class="keys">
+                        <span class="label">KEYS</span>
+                        <span class="key-count" id="keyCount">0</span>
+                    </div>
+                </div>
+                
+                <div class="equipment">
+                    <div class="equipment-slot">
+                        <div class="item-icon sword-icon"></div>
+                        <span>SWORD</span>
+                    </div>
+                    <div class="equipment-slot">
+                        <div class="item-icon shield-icon"></div>
+                        <span>SHIELD</span>
+                    </div>
+                    <div class="equipment-slot">
+                        <div class="item-icon bomb-icon"></div>
+                        <span>BOMB</span>
+                    </div>
+                </div>
+                
+                <div class="inventory-container">
+                    <span class="label">INVENTORY</span>
+                    <div class="inventory-grid">
+                        <div class="inventory-slot empty" id="inv-slot-1"></div>
+                        <div class="inventory-slot empty" id="inv-slot-2"></div>
+                        <div class="inventory-slot empty" id="inv-slot-3"></div>
+                        <div class="inventory-slot empty" id="inv-slot-4"></div>
+                        <div class="inventory-slot empty" id="inv-slot-5"></div>
+                        <div class="inventory-slot empty" id="inv-slot-6"></div>
+                        <div class="inventory-slot empty" id="inv-slot-7"></div>
+                        <div class="inventory-slot empty" id="inv-slot-8"></div>
+                        <div class="inventory-slot empty" id="inv-slot-9"></div>
+                        <div class="inventory-slot empty" id="inv-slot-10"></div>
+                        <div class="inventory-slot empty" id="inv-slot-11"></div>
+                        <div class="inventory-slot empty" id="inv-slot-12"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls-info">
+            <p>ARROW KEYS: Move | SPACE: Attack | E: Boat Interaction | Q: Switch Weapon</p>
+            <p>Find crossbow & arrows → Find wood piece → Repair boat → Sail to boss island → Defeat boss → Get key → Open treasure!</p>
+        </div>
+    </div>
+    
+    <script src="zelda-optimized.js"></script>
+</body>
+</html> 

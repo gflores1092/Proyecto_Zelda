@@ -1,0 +1,16 @@
+{
+  "name": "zelda-2d-game",
+  "version": "1.0.0",
+  "description": "A 2D Zelda-like game built with HTML, CSS, and JavaScript",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 3000 -o",
+    "dev": "npx http-server -p 3000 -o -c-1"
+  },
+  "keywords": ["game", "zelda", "2d", "html5", "javascript"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+} 
