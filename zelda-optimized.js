@@ -18,8 +18,8 @@ class OptimizedZeldaRPG {
         // Game state
         this.gameState = 'playing';
         this.camera = { x: 0, y: 0 };
-        this.worldWidth = 2400;
-        this.worldHeight = 1800;
+        this.worldWidth = 3200;
+        this.worldHeight = 2400;
         this.hasWon = false;
         this.tileSize = 16;
         
@@ -40,6 +40,7 @@ class OptimizedZeldaRPG {
         this.worldMap = [];
         this.boat = { x: 0, y: 0, repaired: false };
         this.arrows = []; // Arrow projectiles
+        this.enemyArrows = []; // Enemy archer arrows
         
         // Performance optimizations
         this.lastFrameTime = 0;
@@ -73,18 +74,21 @@ class OptimizedZeldaRPG {
         // Initialize with water (tile type 1)
         this.worldMap = Array(mapHeight).fill().map(() => Array(mapWidth).fill(1));
         
-        // Create multiple islands
+        // Create multiple islands with expanded map
         this.createIsland(10, 10, 35, 25); // Top-left island (starting area)
         this.createIsland(55, 8, 35, 30); // Top-right island
         this.createIsland(5, 45, 40, 30); // Bottom-left island
         this.createIsland(55, 50, 35, 25); // Bottom-right island (treasure area)
         this.createIsland(25, 25, 30, 20); // Central island
+        this.createIsland(100, 30, 25, 20); // Far right island
+        this.createIsland(20, 80, 30, 25); // Far bottom island
+        this.createIsland(80, 75, 25, 20); // Bottom-right far island
         
         // Boss island - COMPLETELY ISOLATED, far from all other islands
-        this.createIsland(130, 10, 15, 10); // Bigger boss island (far top-right corner, completely isolated)
+        this.createIsland(170, 10, 15, 10); // Bigger boss island (far top-right corner, completely isolated)
         
         // Create dock on boss island
-        this.createDock(135, 19, 3, 2); // Dock on boss island for boat parking
+        this.createDock(175, 19, 3, 2); // Dock on boss island for boat parking
         
         // Create bridges connecting main islands (NOT to boss island)
         this.createBridge(45, 20, 55, 20, true); // Top islands
@@ -92,10 +96,13 @@ class OptimizedZeldaRPG {
         this.createBridge(55, 35, 55, 50, false); // Right to bottom-right
         this.createBridge(45, 55, 55, 60, true); // Bottom islands
         this.createBridge(40, 30, 55, 25, true); // Central to right
+        this.createBridge(90, 35, 100, 40, true); // To far right island
+        this.createBridge(35, 65, 35, 80, false); // To far bottom island
+        this.createBridge(80, 70, 80, 75, false); // To bottom-right far island
         
         // Place boat dock extending from starting island into water
-        this.boat.x = 400; // Dock location - at water edge
-        this.boat.y = 560;
+        this.boat.x = 384; // Dock location - at water edge (ON DOCK TILES)
+        this.boat.y = 576;
         this.boat.repaired = false;
         
         // Create dock tiles extending into water
@@ -106,12 +113,18 @@ class OptimizedZeldaRPG {
         this.addTreesToIsland(60, 15, 25, 20); // Top-right trees
         this.addTreesToIsland(10, 50, 30, 20); // Bottom-left trees
         this.addTreesToIsland(30, 30, 20, 15); // Central island trees
+        this.addTreesToIsland(105, 35, 15, 10); // Far right island trees
+        this.addTreesToIsland(25, 85, 20, 15); // Far bottom island trees
+        this.addTreesToIsland(85, 80, 15, 10); // Bottom-right far island trees
         
         // Add houses on different islands
         this.addHouse(20, 20);
         this.addHouse(65, 25);
         this.addHouse(15, 55);
         this.addHouse(35, 35);
+        this.addHouse(110, 40);
+        this.addHouse(30, 90);
+        this.addHouse(90, 85);
         
         // Initialize enemies across different islands
         this.enemies = [
@@ -131,8 +144,20 @@ class OptimizedZeldaRPG {
             { x: 500, y: 500, health: 4, maxHealth: 4, speed: 3, type: 1 },
             { x: 600, y: 550, health: 4, maxHealth: 4, speed: 3, type: 1 },
             
+            // Far right island (archer enemies)
+            { x: 1700, y: 600, health: 4, maxHealth: 4, speed: 2, type: 3, shootCooldown: 0 },
+            { x: 1800, y: 650, health: 4, maxHealth: 4, speed: 2, type: 3, shootCooldown: 0 },
+            
+            // Far bottom island (mixed enemies)
+            { x: 400, y: 1400, health: 3, maxHealth: 3, speed: 2.5, type: 1 },
+            { x: 500, y: 1450, health: 4, maxHealth: 4, speed: 2, type: 3, shootCooldown: 0 },
+            
+            // Bottom-right far island (archer enemies)
+            { x: 1350, y: 1300, health: 4, maxHealth: 4, speed: 2, type: 3, shootCooldown: 0 },
+            { x: 1450, y: 1350, health: 5, maxHealth: 5, speed: 2, type: 3, shootCooldown: 0 },
+            
             // Boss island - FINAL BOSS (only accessible by boat)
-            { x: 2150, y: 250, health: 10, maxHealth: 10, speed: 1.5, type: 2, isBoss: true }
+            { x: 2750, y: 250, health: 10, maxHealth: 10, speed: 1.5, type: 2, isBoss: true }
         ];
         
         // Initialize items across different islands
@@ -161,6 +186,21 @@ class OptimizedZeldaRPG {
             { x: 520, y: 450, type: 7, collected: false }, // arrow
             { x: 600, y: 500, type: 7, collected: false }, // arrow
             
+            // Far right island
+            { x: 1750, y: 580, type: 1, collected: false }, // heart
+            { x: 1650, y: 620, type: 7, collected: false }, // arrow
+            { x: 1850, y: 600, type: 7, collected: false }, // arrow
+            
+            // Far bottom island
+            { x: 450, y: 1380, type: 0, collected: false }, // rupee
+            { x: 350, y: 1450, type: 7, collected: false }, // arrow
+            { x: 550, y: 1420, type: 2, collected: false }, // bomb
+            
+            // Bottom-right far island
+            { x: 1400, y: 1280, type: 1, collected: false }, // heart
+            { x: 1300, y: 1350, type: 7, collected: false }, // arrow
+            { x: 1500, y: 1320, type: 7, collected: false }, // arrow
+            
             // Bottom-right island (treasure area)
             { x: 1200, y: 900, type: 4, collected: false, requiresKey: true }, // treasure
             { x: 1150, y: 950, type: 0, collected: false }, // rupee
@@ -168,9 +208,34 @@ class OptimizedZeldaRPG {
             { x: 1100, y: 920, type: 7, collected: false }, // arrow
             
             // Boss island - arrows scattered around
-            { x: 1500, y: 200, type: 7, collected: false }, // arrow
-            { x: 1600, y: 280, type: 7, collected: false }, // arrow
-            { x: 1580, y: 220, type: 7, collected: false }, // arrow
+            { x: 2700, y: 200, type: 7, collected: false }, // arrow
+            { x: 2800, y: 280, type: 7, collected: false }, // arrow
+            { x: 2780, y: 220, type: 7, collected: false }, // arrow
+            
+            // ADDITIONAL HEARTS FOR BALANCE (10 more hearts across all islands)
+            // Starting island - extra hearts
+            { x: 250, y: 300, type: 1, collected: false }, // heart
+            { x: 380, y: 200, type: 1, collected: false }, // heart
+            
+            // Top-right island - extra hearts
+            { x: 1000, y: 350, type: 1, collected: false }, // heart
+            { x: 1150, y: 180, type: 1, collected: false }, // heart
+            
+            // Bottom-left island - extra hearts
+            { x: 150, y: 850, type: 1, collected: false }, // heart
+            { x: 320, y: 950, type: 1, collected: false }, // heart
+            
+            // Central island - extra heart
+            { x: 450, y: 480, type: 1, collected: false }, // heart
+            
+            // Far right island - extra heart
+            { x: 1800, y: 550, type: 1, collected: false }, // heart
+            
+            // Far bottom island - extra heart
+            { x: 400, y: 1450, type: 1, collected: false }, // heart
+            
+            // Bottom-right far island - extra heart
+            { x: 1350, y: 1400, type: 1, collected: false }, // heart
             
             // Boss island - KEY (dropped by boss when defeated)
             // Key will be added dynamically when boss is defeated
@@ -398,10 +463,37 @@ class OptimizedZeldaRPG {
             const tile = this.worldMap[tileY] && this.worldMap[tileY][tileX];
             if (tile === 0 || tile === 2 || tile === 5) { // grass, bridge, or dock
                 this.player.onBoat = false;
-                this.boat.x = this.player.x;
-                this.boat.y = this.player.y;
+                // Move boat to nearest dock tile to ensure it stays on dock
+                this.moveBoatToDock();
             }
         }
+    }
+    
+    moveBoatToDock() {
+        // Find nearest dock tile to current position
+        const currentTileX = Math.floor(this.boat.x / this.tileSize);
+        const currentTileY = Math.floor(this.boat.y / this.tileSize);
+        
+        // Search for dock tiles nearby
+        for (let dy = -3; dy <= 3; dy++) {
+            for (let dx = -3; dx <= 3; dx++) {
+                const tileX = currentTileX + dx;
+                const tileY = currentTileY + dy;
+                
+                if (tileY >= 0 && tileY < this.worldMap.length && 
+                    tileX >= 0 && tileX < this.worldMap[0].length) {
+                    const tile = this.worldMap[tileY][tileX];
+                    
+                    if (tile === 5) { // dock tile
+                        this.boat.x = tileX * this.tileSize;
+                        this.boat.y = tileY * this.tileSize;
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // If no dock found, keep boat at current position (fallback)
     }
     
     // Check if player is on boss island
@@ -409,8 +501,8 @@ class OptimizedZeldaRPG {
         const tileX = Math.floor(this.player.x / this.tileSize);
         const tileY = Math.floor(this.player.y / this.tileSize);
         
-        // Boss island coordinates (130, 10, 15, 10) = x: 130-145, y: 10-20
-        return tileX >= 130 && tileX <= 145 && tileY >= 10 && tileY <= 20;
+        // Boss island coordinates (170, 10, 15, 10) = x: 170-185, y: 10-20
+        return tileX >= 170 && tileX <= 185 && tileY >= 10 && tileY <= 20;
     }
     
     // Prevent accessing boss island without boat
@@ -570,26 +662,55 @@ class OptimizedZeldaRPG {
             const dy = this.player.y - enemy.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance > 20 && distance < 120) {
-                const moveX = (dx / distance) * enemy.speed;
-                const moveY = (dy / distance) * enemy.speed;
-                
-                // Check if new position would be on water (enemies can't walk on water)
-                const newX = enemy.x + moveX;
-                const newY = enemy.y + moveY;
-                
-                if (!this.checkEnemyWaterCollision(newX, newY)) {
-                    enemy.x = newX;
-                    enemy.y = newY;
-                } else {
-                    // If can't move directly toward player due to water, try alternative paths
-                    // Try moving only horizontally
-                    if (!this.checkEnemyWaterCollision(enemy.x + moveX, enemy.y)) {
-                        enemy.x += moveX;
+            // Archer enemies (type 3) behavior
+            if (enemy.type === 3) {
+                // Archers try to maintain distance and shoot arrows
+                if (distance < 80) {
+                    // Move away from player to maintain range
+                    const moveX = -(dx / distance) * enemy.speed;
+                    const moveY = -(dy / distance) * enemy.speed;
+                    
+                    const newX = enemy.x + moveX;
+                    const newY = enemy.y + moveY;
+                    
+                    if (!this.checkEnemyWaterCollision(newX, newY)) {
+                        enemy.x = newX;
+                        enemy.y = newY;
                     }
-                    // Try moving only vertically
-                    else if (!this.checkEnemyWaterCollision(enemy.x, enemy.y + moveY)) {
-                        enemy.y += moveY;
+                }
+                
+                // Shoot arrows at player
+                if (distance < 150 && enemy.shootCooldown <= 0) {
+                    this.enemyShootArrow(enemy, dx, dy, distance);
+                    enemy.shootCooldown = 60; // 1 second cooldown
+                }
+                
+                if (enemy.shootCooldown > 0) {
+                    enemy.shootCooldown--;
+                }
+            } else {
+                // Regular enemy behavior
+                if (distance > 20 && distance < 120) {
+                    const moveX = (dx / distance) * enemy.speed;
+                    const moveY = (dy / distance) * enemy.speed;
+                    
+                    // Check if new position would be on water (enemies can't walk on water)
+                    const newX = enemy.x + moveX;
+                    const newY = enemy.y + moveY;
+                    
+                    if (!this.checkEnemyWaterCollision(newX, newY)) {
+                        enemy.x = newX;
+                        enemy.y = newY;
+                    } else {
+                        // If can't move directly toward player due to water, try alternative paths
+                        // Try moving only horizontally
+                        if (!this.checkEnemyWaterCollision(enemy.x + moveX, enemy.y)) {
+                            enemy.x += moveX;
+                        }
+                        // Try moving only vertically
+                        else if (!this.checkEnemyWaterCollision(enemy.x, enemy.y + moveY)) {
+                            enemy.y += moveY;
+                        }
                     }
                 }
             }
@@ -631,6 +752,53 @@ class OptimizedZeldaRPG {
         }
         
         return false; // No water collision
+    }
+    
+    enemyShootArrow(enemy, dx, dy, distance) {
+        // Normalize direction
+        const dirX = dx / distance;
+        const dirY = dy / distance;
+        
+        // Create enemy arrow
+        const enemyArrow = {
+            x: enemy.x + 8, // Center of enemy
+            y: enemy.y + 8,
+            dx: dirX * 4, // Arrow speed
+            dy: dirY * 4,
+            life: 120 // Arrow lifetime (2 seconds)
+        };
+        
+        this.enemyArrows.push(enemyArrow);
+    }
+    
+    updateEnemyArrows() {
+        this.enemyArrows = this.enemyArrows.filter(arrow => {
+            arrow.x += arrow.dx;
+            arrow.y += arrow.dy;
+            arrow.life--;
+            
+            // Check collision with player
+            const dx = arrow.x - (this.player.x + 8);
+            const dy = arrow.y - (this.player.y + 8);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 12 && !this.player.invulnerable) {
+                this.player.health--;
+                this.player.invulnerable = true;
+                this.player.invulnerabilityTimer = 40;
+                this.updateHealthUI();
+                
+                if (this.player.health <= 0) this.gameState = 'gameOver';
+                return false; // Remove arrow
+            }
+            
+            // Check collision with world (walls, trees, etc.)
+            if (this.checkArrowCollision(arrow.x, arrow.y)) {
+                return false; // Remove arrow
+            }
+            
+            return arrow.life > 0;
+        });
     }
     
     updateItems() {
@@ -869,7 +1037,7 @@ class OptimizedZeldaRPG {
             const screenY = enemy.y - this.camera.y;
             
             // Draw enemy body
-            const colors = ['#FF4500', '#8B0000', '#4B0082']; // octorok, moblin, boss
+            const colors = ['#FF4500', '#8B0000', '#4B0082', '#9400D3']; // octorok, moblin, boss, archer
             this.ctx.fillStyle = colors[enemy.type] || colors[0];
             
             // Boss is larger
@@ -891,6 +1059,17 @@ class OptimizedZeldaRPG {
                 // Regular enemy eyes
                 this.ctx.fillRect(screenX + 3, screenY + 3, 2, 2);
                 this.ctx.fillRect(screenX + 11, screenY + 3, 2, 2);
+                
+                // Draw bow for archer enemies
+                if (enemy.type === 3) {
+                    this.ctx.fillStyle = '#8B4513'; // brown bow
+                    this.ctx.fillRect(screenX + 14, screenY + 6, 4, 4);
+                    this.ctx.fillStyle = '#A0522D'; // lighter brown
+                    this.ctx.fillRect(screenX + 15, screenY + 7, 2, 2);
+                    // Bow string
+                    this.ctx.fillStyle = '#DDD';
+                    this.ctx.fillRect(screenX + 16, screenY + 5, 1, 6);
+                }
             }
             
             // Draw health bar above enemy
@@ -1030,6 +1209,19 @@ class OptimizedZeldaRPG {
         });
     }
     
+    drawEnemyArrows() {
+        this.enemyArrows.forEach(arrow => {
+            const x = arrow.x - this.camera.x;
+            const y = arrow.y - this.camera.y;
+            
+            // Draw enemy arrows in red to distinguish from player arrows
+            this.ctx.fillStyle = '#8B0000'; // dark red shaft
+            this.ctx.fillRect(x - 2, y - 2, 4, 4);
+            this.ctx.fillStyle = '#FF0000'; // bright red tip
+            this.ctx.fillRect(x - 1, y - 1, 2, 2);
+        });
+    }
+    
     drawBoat() {
         const x = this.boat.x - this.camera.x;
         const y = this.boat.y - this.camera.y;
@@ -1148,6 +1340,7 @@ class OptimizedZeldaRPG {
         this.updateEnemies();
         this.updateItems();
         this.updateArrows();
+        this.updateEnemyArrows();
     }
     
     draw() {
@@ -1158,6 +1351,7 @@ class OptimizedZeldaRPG {
         this.drawItems();
         this.drawEnemies();
         this.drawArrows();
+        this.drawEnemyArrows();
         this.drawPlayer();
         
         if (this.gameState === 'gameOver') {
